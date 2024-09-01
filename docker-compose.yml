@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+
+  jenkins:
+    build:
+      context: ${JENKINS_CONTEXT}
+      dockerfile: ${JENKINS_DOCKERFILE}
+    container_name: ${JENKINS_CONTAINER_NAME}
+    privileged: true
+    user: root
+    environment:
+      DOCKER_HOST: 'tcp://docker-proxy:2375'
+    ports:
+      - ${JENKINS_SERVER_PORT_HOST}:${JENKINS_SERVER_PORT_CONTAINER}
+      - ${JENKINS_SERVER_PORT_HOST_SSL}:${JENKINS_SERVER_PORT_CONTAINER_SSL}
+      - ${JENKINS_INBOUND_AGENTS_PORT_HOST}:${JENKINS_INBOUND_AGENTS_PORT_CONTAINER}
+    volumes:
+      - jenkins-2.453-home:${JENKINS_HOME_PATH}
+    restart: always
+    networks:
+      - jenkins-2.453-network:
+
+  docker-proxy:
+    image: alpine/socat
+    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - jenkins-2.453-network:
+
+
+volumes:
+  jenkins-2.453-home:
+
+networks:
+  jenkins-2.453-network:
